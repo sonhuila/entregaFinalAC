@@ -32,7 +32,7 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 #define DHTTYPE DHT22
 DHT dht(DHTPIN, DHTTYPE);
 #define TEMPERATURA_UMBRAL 28.0 // Temperatura De alerta
-#define BUZZER_PIN 6
+#define BUZZER_PIN 22
 #define LDR_PIN A1
 #define PIN_PIR 27
 #define LED_PIN 13
