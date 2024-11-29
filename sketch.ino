@@ -1,12 +1,17 @@
-#include "StateMachineLib.h"
-#include "AsyncTaskLib.h"
-#include "DHT.h"
-#include <LiquidCrystal.h>
-#include <Keypad.h>
+// Proyecto: Sistema de Seguridad con Arduino
+// Integrantes:
+// 1. Gloria Valentina Idrobo Montenegro
+// 2. Jhon Alexander Ramirez Anacona
+// 3. Maria Paula Barrera Muñoz
+
+#include "StateMachineLib.h" // Biblioteca para manejar la máquina de estados
+#include "AsyncTaskLib.h"    // Biblioteca para tareas asincrónicas
+#include "DHT.h"             // Biblioteca para el sensor DHT
+#include <LiquidCrystal.h>   // Biblioteca para manejar el LCD
+#include <Keypad.h>          // Biblioteca para el teclado matricial
 
 int intentosFallidos = 0;       // Rastrea los intentos fallidos
 bool sistemaBloqueado = false; // Indica si el sistema está temporalmente bloqueado
-
 
 // Variable global para rastrear el tiempo de inicio del ingreso
 unsigned long tiempoInicioIngreso = 0;
