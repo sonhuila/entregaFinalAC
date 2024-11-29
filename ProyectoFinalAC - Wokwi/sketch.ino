@@ -18,10 +18,11 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 // Configuración del teclado
 const byte ROWS = 4, COLS = 4;
 char keys[ROWS][COLS] = {
-    {'1', '2', '3', 'A'},
-    {'4', '5', '6', 'B'},
-    {'7', '8', '9', 'C'},
-    {'*', '0', '#', 'D'}};
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
 byte rowPins[ROWS] = {32, 34, 36, 38};
 byte colPins[COLS] = {40, 42, 44, 46};
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
@@ -30,16 +31,15 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 #define DHTPIN A0
 #define DHTTYPE DHT22
 DHT dht(DHTPIN, DHTTYPE);
-#define TEMPERATURA_UMBRAL 30.0 // Temperatura De alerta
-#define PIN_SENSOR_HALL A3  
+#define TEMPERATURA_UMBRAL 28.0 // Temperatura De alerta
 #define BUZZER_PIN 22
 #define LDR_PIN A1
 #define PIN_PIR 27
 #define LED_PIN 13
 
-#define ledRedPin 10 
+#define ledRedPin 10
 #define ledGreenPin 9
-#define ledBluePin 8 
+#define ledBluePin 8
 
 // Máquina de estados
 enum State
@@ -54,7 +54,7 @@ enum Input
 {
   INPUT_T,       // Evento temporizador terminado
   INPUT_P,       // Evento temperatura alta
-  INPUT_S,       // Evento PIR o Hall
+  INPUT_S,       // Evento PIR
   INPUT_UNKNOWN // Evento predeterminado, sin acciones específicas
 };
 StateMachine stateMachine(5, 8);
@@ -71,41 +71,41 @@ bool transicion_desencadenada = false;
 unsigned long ultimo_Tiempo_Led = 0;
 unsigned long ultimo_tiempo_buzzer = 0;
 // intervalo predeterminado para el LED
-unsigned long ledIntervalo = 500; 
+unsigned long ledIntervalo = 500;
 bool ledEstado = false;
 bool buzzerEstado = false;
 
 // ====================== AsyncTasks ======================
 AsyncTask TaskTemperatura(500, true, []() {
   temperatura = dht.readTemperature();
-    humedad = dht.readHumidity();
-    if (temperatura > TEMPERATURA_UMBRAL && stateMachine.GetState() == MONITOREO_AMBIENTAL)
-    {
-        input = INPUT_P;
-        Serial.println("Temperatura excede el umbral. Activando alarma");
-    }
+  humedad = dht.readHumidity();
+  if (temperatura > TEMPERATURA_UMBRAL && stateMachine.GetState() == MONITOREO_AMBIENTAL)
+  {
+    input = INPUT_P;
+    Serial.println("Temperatura excede el umbral. Activando alarma");
+  }
 });
 
 AsyncTask TaskLuz(50, true, []() {
-    luz = analogRead(LDR_PIN);
+  luz = analogRead(LDR_PIN);
 });
 
 AsyncTask TaskInfraRojo(500, true, []() {
   pirEstado = digitalRead(PIN_PIR);
-  if (pirEstado == HIGH && stateMachine.GetState() == MONITOR_EVENTOS){
+  if (pirEstado == LOW && stateMachine.GetState() == MONITOR_EVENTOS) {
     input = INPUT_S;
-    Serial.println("Movimiento detectado. Activando alarma");
+    Serial.println("Movimiento detectado. Alarma");
   }
 });
 
 AsyncTask TaskMonitoreoAmbiental(5000, false, []() {
-  if (stateMachine.GetState() == MONITOREO_AMBIENTAL){
+  if (stateMachine.GetState() == MONITOREO_AMBIENTAL) {
     transicion_desencadenada = true;
   }
 });
 
 AsyncTask TaskMonitorEventos(3000, false, []() {
-  if (stateMachine.GetState() == MONITOR_EVENTOS){
+  if (stateMachine.GetState() == MONITOR_EVENTOS) {
     transicion_desencadenada = true;
   }
 });
@@ -119,18 +119,18 @@ AsyncTask TaskBloqueoTiempo(7000, false, []() {
     digitalWrite(ledRedPin, LOW);
     noTone(BUZZER_PIN);
     lcd.print("Ingrese clave:");
-    Serial.println("Tiempo de bloqueo terminado. Puede ingresar nuevamente.");
+    Serial.println("Tiempo de bloqueo terminado");
   } else if (stateMachine.GetState() == BLOQUEADO) {
     input = INPUT_T; // Transición al estado INICIO
-    Serial.println("Tiempo de bloqueo terminado. Regresando al estado INICIO.");
+    Serial.println("Tiempo de bloqueo terminado");
   }
 });
 
 
 // ====================== Funciones Estados ======================
 //controla el parpadeo del LED en funcion de un intervalo de tiempo.
-void MantenerLed(unsigned long interval){
-  if (millis() - ultimo_Tiempo_Led >= interval){
+void MantenerLed(unsigned long interval) {
+  if (millis() - ultimo_Tiempo_Led >= interval) {
     ultimo_Tiempo_Led = millis();
     ledEstado = !ledEstado;
     digitalWrite(ledRedPin, ledEstado);
@@ -139,53 +139,53 @@ void MantenerLed(unsigned long interval){
   }
 }
 //controla el buzzer para crear un sonido de alarma.
-void MantenerBuzzer(){
-	// Alternar tono cada 150 ms
-  if (millis() - ultimo_tiempo_buzzer >= 150){
+void MantenerBuzzer() {
+  // Alternar tono cada 150 ms
+  if (millis() - ultimo_tiempo_buzzer >= 150) {
     ultimo_tiempo_buzzer = millis();
     buzzerEstado = !buzzerEstado;
-    if (buzzerEstado){
+    if (buzzerEstado) {
       tone(BUZZER_PIN, 1000); // Tono 1000 Hz
-    }else{
+    } else {
       tone(BUZZER_PIN, 1500); // Tono 1500 Hz
     }
   }
 }
 //configuracion inicial al entrar en el estado BLOQUEADO.
-void Bloqueado(){
+void Bloqueado() {
   lcd.clear();
   lcd.print("BLOQUEADO 7s");
-  Serial.println("Entrando al estado BLOQUEADO");
+  Serial.println("Entering BLOQUEADO");
   ledIntervalo = 500; // Parpadeo cada 500 ms
   MantenerLed(ledIntervalo);
   tone(BUZZER_PIN, 500); // Buzzer a 500 Hz constante
-  TaskBloqueoTiempo.Start(); 
+  TaskBloqueoTiempo.Start();
 }
 
 //configuracion al salir del estado BLOQUEADO.
-void salir_Bloqueado(){
-  Serial.println("Saliendo del estado BLOQUEADO"); 
+void salir_Bloqueado() {
+  Serial.println("Leaving BLOQUEADO");
   digitalWrite(ledRedPin, LOW);
-	TaskBloqueoTiempo.Stop();// Detiene el temporizador
+  TaskBloqueoTiempo.Stop();// Detiene el temporizador
   noTone(BUZZER_PIN);
 
 }
 //configuracion inicial al entrar en el estado INICIO.
-void Inicio(){
-	pirEstado =0;
+void Inicio() {
+  pirEstado = 0;
   input = INPUT_UNKNOWN;
   contrasenaIngresada = "";
   lcd.clear();
-	lcd.print("Ingrese clave:");
-	Serial.println("Entrando al estado INICIO");
+  lcd.print("Ingrese clave:");
+  Serial.println("Entering INICIO");
 }
 //configuración al salir del estado INICIO.
-void salir_Inicio(){
-  Serial.println("Saliendo del estado INICIO");
+void salir_Inicio() {
+  Serial.println("Leaving INICIO");
   lcd.clear();
 }
 //configuracion inicial al entrar en el estado MONITOREO_AMBIENTAL.
-void Monitoreo(){
+void Monitoreo() {
   lcd.clear();
   // Leer sensores manualmente en el estado MONITOREO_AMBIENTAL
   temperatura = dht.readTemperature();
@@ -199,70 +199,59 @@ void Monitoreo(){
   lcd.setCursor(0, 1);
   lcd.print("Luz: ");
   lcd.print(luz);
-  Serial.println("Entrando al estado MONITOREO_AMBIENTAL");
+  Serial.println("Entering MONITOREO_AMBIENTAL");
   TaskTemperatura.Start();
   TaskLuz.Start();
   TaskMonitoreoAmbiental.Start();
   transicion_desencadenada = false;
 }
 //configuracion al salir del estado MONITOREO_AMBIENTAL
-void salir_Monitoreo(){
-  Serial.println("Saliendo del estado MONITOREO_AMBIENTAL");
+void salir_Monitoreo() {
+  Serial.println("Leaving MONITOREO_AMBIENTAL");
   TaskTemperatura.Stop();
   TaskLuz.Stop();
   TaskMonitoreoAmbiental.Stop();
   lcd.clear();
 }
 // configuracion inicial al entrar en el estado MONITOR_EVENTOS.
-void Eventos(){
+void Eventos() {
   lcd.clear();
-  // Leer estado del botón (simulando el sensor Hall)
-  int estadoBotonHall = digitalRead(PIN_SENSOR_HALL);
+
   // Leer estado del sensor PIR
   pirEstado = digitalRead(PIN_PIR);
   // Mostrar información en el LCD
-  lcd.print("PIR: ");
-  lcd.print(pirEstado ? "Activo" : "Inactivo");
+  lcd.print("ANALISIS PIR");
+  //lcd.print(pirEstado ? "Inactivo" : "Activo");
   lcd.setCursor(0, 1);
-  lcd.print("HALL: ");
-  lcd.print(estadoBotonHall == HIGH ? "ALTO" : "BAJO");
-  // Activar alarma si el botón está en HIGH mientras se implementa sensor hall
-  if (estadoBotonHall == HIGH)
-  {
-  	input = INPUT_S;
-    Serial.println("Campo magnético alto detectado. Activando alarma");
-  }
-  Serial.print("Estado del botón Hall: ");
-  Serial.println(estadoBotonHall == HIGH ? "ALTO" : "BAJO");
-  Serial.println("Entrando al estado MONITOR_EVENTOS");
+  Serial.println("MONITOR_EVENTOS");
   TaskInfraRojo.Start();
   TaskMonitorEventos.Start();
   transicion_desencadenada = false;
 }
 // configuracion al salir en el estado MONITOR_EVENTOS.
-void salir_Eventos(){
-  Serial.println("Saliendo del estado MONITOR_EVENTOS");
+void salir_Eventos() {
+  Serial.println("Leaving MONITOR_EVENTOS");
   TaskInfraRojo.Stop();
   TaskMonitorEventos.Stop();
   lcd.clear();
 }
 // configuracion inicial al entrar en el estado ALARMA.
-void Alarma(){
+void Alarma() {
   lcd.clear();
-	if(temperatura >TEMPERATURA_UMBRAL){
-		lcd.print("TEMP ALTA");
-	}else{
-		lcd.print("MOV DETECTADO");
-	}
-	delay(1500);
-	lcd.clear();
+  if (temperatura > TEMPERATURA_UMBRAL) {
+    lcd.print("TEMP ALTA");
+  } else {
+    lcd.print("MOV DETECTADO");
+  }
+  delay(1500);
+  lcd.clear();
   lcd.print("ALARMA ACTIVADA");
-  Serial.println("Entrando al estado ALARMA");
+  Serial.println("Entering ALARMA");
   ledIntervalo = 150; // Parpadeo cada 150 ms
 }
 // configuracion al salir del estado ALARMA.
-void salir_Alarma(){
-  Serial.println("Saliendo del estado ALARMA");
+void salir_Alarma() {
+  Serial.println("Leaving ALARMA");
   noTone(BUZZER_PIN);
   digitalWrite(ledRedPin, LOW);
   lcd.clear();
@@ -296,7 +285,7 @@ void leer_teclado() {
       contrasenaIngresada = "";  // Reinicia la entrada de la contraseña
       intentosFallidos++;        // Incrementa los intentos fallidos
       lcd.clear();
-      lcd.print("Clave incorrecta");
+      lcd.print("Clave incorrecta!");
       delay(1000);
       lcd.clear();
 
@@ -318,8 +307,12 @@ void leer_teclado() {
         tiempoInicioIngreso = 0;  // Reinicia el temporizador
       } else if (contrasenaIngresada.length() < 4) {
         contrasenaIngresada += tecla;
-        lcd.setCursor(0, 1);
-        lcd.print(contrasenaIngresada);
+
+        // Aquí se imprimen los asteriscos en lugar de la contraseña real
+        lcd.setCursor(0, 1); // Establece la posición del cursor en la segunda línea
+        for (int i = 0; i < contrasenaIngresada.length(); i++) {
+          lcd.print('*'); // Imprime asterisco por cada carácter ingresado
+        }
 
         if (contrasenaIngresada.length() == 4) {
           if (contrasenaIngresada == contrasenaCorrecta) {
@@ -329,7 +322,7 @@ void leer_teclado() {
             contrasenaIngresada = "";
             intentosFallidos++;
             lcd.clear();
-            lcd.print("Clave incorrecta");
+            lcd.print("Clave incorrecta!");
             delay(1000);
             lcd.clear();
 
@@ -349,6 +342,7 @@ void leer_teclado() {
 
 
 
+
 // ====================== Configuración Inicial ======================
 void setup()
 {
@@ -362,14 +356,30 @@ void setup()
   pinMode(ledBluePin, OUTPUT);
   noTone(BUZZER_PIN);
 
-  stateMachine.AddTransition(INICIO, MONITOREO_AMBIENTAL, []() { return input == INPUT_T; });
-  stateMachine.AddTransition(MONITOREO_AMBIENTAL, MONITOR_EVENTOS, []() { return transicion_desencadenada; });
-  stateMachine.AddTransition(MONITOR_EVENTOS, MONITOREO_AMBIENTAL, []() { return transicion_desencadenada; });
-  stateMachine.AddTransition(MONITOREO_AMBIENTAL, ALARMA, []() { return input == INPUT_P; });
-  stateMachine.AddTransition(MONITOR_EVENTOS, ALARMA, []() { return input == INPUT_S; });
-  stateMachine.AddTransition(ALARMA, INICIO, []() { return input == INPUT_T; });
-  stateMachine.AddTransition(INICIO, BLOQUEADO, []() { return input == INPUT_S; });
-  stateMachine.AddTransition(BLOQUEADO, INICIO, []() { return input == INPUT_T; });
+  stateMachine.AddTransition(INICIO, MONITOREO_AMBIENTAL, []() {
+    return input == INPUT_T;
+  });
+  stateMachine.AddTransition(MONITOREO_AMBIENTAL, MONITOR_EVENTOS, []() {
+    return transicion_desencadenada;
+  });
+  stateMachine.AddTransition(MONITOR_EVENTOS, MONITOREO_AMBIENTAL, []() {
+    return transicion_desencadenada;
+  });
+  stateMachine.AddTransition(MONITOREO_AMBIENTAL, ALARMA, []() {
+    return input == INPUT_P;
+  });
+  stateMachine.AddTransition(MONITOR_EVENTOS, ALARMA, []() {
+    return input == INPUT_S;
+  });
+  stateMachine.AddTransition(ALARMA, INICIO, []() {
+    return input == INPUT_T;
+  });
+  stateMachine.AddTransition(INICIO, BLOQUEADO, []() {
+    return input == INPUT_S;
+  });
+  stateMachine.AddTransition(BLOQUEADO, INICIO, []() {
+    return input == INPUT_T;
+  });
 
   stateMachine.SetOnEntering(INICIO, Inicio);
   stateMachine.SetOnLeaving(INICIO, salir_Inicio);
@@ -389,10 +399,10 @@ void setup()
 void loop()
 {
   leer_teclado();
-	if (stateMachine.GetState() == ALARMA || stateMachine.GetState() == BLOQUEADO){
+  if (stateMachine.GetState() == ALARMA || stateMachine.GetState() == BLOQUEADO) {
     MantenerLed(ledIntervalo);
   }
-	if (stateMachine.GetState() == ALARMA){
+  if (stateMachine.GetState() == ALARMA) {
     MantenerBuzzer();
   }
   TaskTemperatura.Update();
