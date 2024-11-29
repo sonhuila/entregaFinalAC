@@ -25,7 +25,7 @@ Si se detecta un valor fuera de rango en los sensores o algún movimiento inusua
 Si un usuario ingresa la clave incorrecta varias veces, el sistema se bloquea y requiere un reinicio.
 
 # Bosquejo de sistema
-![image]()
+![image](https://github.com/sonhuila/entregaFinalAC/blob/main/bosquejo.jpeg)
 
 # Integrantes
 1. Gloria Valentina Idrobo Montenegro
