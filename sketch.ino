@@ -40,7 +40,6 @@ DHT dht(DHTPIN, DHTTYPE);
 #define BUZZER_PIN 6
 #define LDR_PIN A1
 #define PIN_PIR 27
-#define LED_PIN 13
 
 #define ledRedPin 10
 #define ledGreenPin 9
