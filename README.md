@@ -1,5 +1,5 @@
-# Proyecto: Sistema de Seguridad con Arduino
-Entrega del proyecto final de Arquitecura Computacional
+# Proyecto: Sistema de Monitoreo y Seguridad con Arduino
+Este proyecto implementa un sistema de monitoreo y seguridad basado en una máquina de estados, sensores ambientales (DHT, PIR, LDR), y una interfaz con teclado y pantalla LCD. Su objetivo es simular un sistema de seguridad que supervisa eventos, como detección de movimiento o temperaturas altas, y responde a ellos activando alarmas o bloqueos según el contexto.
 
 # Dependencias
 - StateMachineLib
